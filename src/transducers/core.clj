@@ -1,4 +1,5 @@
-(ns transducers.core)
+(ns transducers.core
+  (:require [clojure.core.async :as async]))
 
 ; Transducers
 
@@ -214,6 +215,18 @@
 ; Hey i thought the point was these things could work anywhere?!
 
 ; core.async/chan now accepts a transducer as an argument
+; But we have to do quite a bit to get back to what transduce is doing above
 
+(defn process-chans
+  []
+  (let [xf-chan (async/chan 1 (comp odd-filter
+                                    (map inc)))
+        rf-chan (async/reduce most-frequent 
+                              (most-frequent)
+                              xf-chan)]
+    (async/onto-chan xf-chan nums)
+    (-> 
+     (async/<!! rf-chan)
+     most-frequent)))
 
-
+(process-chans)
